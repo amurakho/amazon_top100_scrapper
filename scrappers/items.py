@@ -11,3 +11,14 @@ import scrapy
 class CategoryItem(scrapy.Item):
     name = scrapy.Field()
     url = scrapy.Field()
+
+
+class LinkItem(scrapy.Item):
+    url = scrapy.Field()
+    category = scrapy.Field()
+
+
+class ErrorItem(scrapy.Item):
+    url = scrapy.Field()
+    error_text = scrapy.Field()
+    category = scrapy.Field()

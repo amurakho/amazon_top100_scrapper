@@ -130,3 +130,4 @@ dmypy.json
 .pyre/
 
 category_base.csv
+category_base_checker.py
