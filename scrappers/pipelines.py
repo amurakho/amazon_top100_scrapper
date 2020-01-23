@@ -7,22 +7,13 @@
 
 import datetime
 from scrappers.items import LinkItem, ErrorItem
-import mysql.connector
+from scrappers.utils import connection
 
-class GetLinkPipeline(object):
+class GetLinkPipeline():
 
     @staticmethod
     def _get_asin(url):
         return url[url.find('dp/') + 3:url.find('?')]
-
-    def _connect(self):
-        self.conn = mysql.connector.connect(
-            host='localhost',
-            user='amazon_links',
-            passwd='utor93lol',
-            database='amazon_links'
-        )
-        self.curr = self.conn.cursor()
 
     def _create_table(self):
         # error table
@@ -43,16 +34,17 @@ class GetLinkPipeline(object):
             """
                 CREATE TABLE IF NOT EXISTS links (
                     link_id int unsigned not null auto_increment,
-                    category text,
-                    url text,
-                    asin VARCHAR(15)
+                    category_id int unsigned not null,
+                    url VARCHAR(100) UNIQUE,
+                    asin VARCHAR(15),
+                    FOREIGN KEY (category_id) REFERENCES categories(category_id) ON DELETE CASCADE,
                     PRIMARY KEY(link_id)
                     );
             """
         )
 
     def process_item(self, item, spider):
-        self._connect()
+        self.conn, self.curr = connection.connect()
         self._create_table()
         # if was error
         if isinstance(item, ErrorItem):
@@ -61,19 +53,57 @@ class GetLinkPipeline(object):
                 INSERT INTO errors(url, text, category)
                 VALUES (%s, %s, %s)
                 """,
-                item['url'],
-                item['error_text'],
-                item['category']
-            )
+                (
+                    item['url'],
+                    item['error_text'],
+                    item['category']
+            ))
         else:
             asin = self._get_asin(item['url'])
             self.curr.execute(
                 """
-                INSERT INTO links(url, category, asin)
+                INSERT IGNORE INTO links(url, category, asin)
                 VALUES (%s, %s, %s)
                 """,
+                (
+                    item['url'],
+                    item['category'],
+                    asin
+            ))
+        self.conn.commit()
+        return item
+
+
+class GetCategoryPipeline():
+
+    def _create_table(self):
+        # error table
+        self.curr.execute(
+            """
+                CREATE TABLE IF NOT EXISTS categories (
+                    category_id int unsigned not null auto_increment,
+                    name text,
+                    url VARCHAR(200) UNIQUE,
+                    status VARCHAR(10),
+                    PRIMARY KEY(category_id)
+                    );
+            """
+        )
+
+    def process_item(self, item, spider):
+        if item['name'] == 'Any Department':
+            return item
+        self.conn, self.curr = connection.connect()
+        self._create_table()
+        self.curr.execute(
+            """
+            INSERT IGNORE INTO categories(url, name, status)
+            VALUES (%s, %s, %s)
+            """,
+            (
                 item['url'],
-                item['category'],
-                asin
-            )
+                item['name'],
+                item['status']
+            ))
+        self.conn.commit()
         return item

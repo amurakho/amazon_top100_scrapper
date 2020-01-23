@@ -2,6 +2,7 @@
 import scrapy
 import pandas as pd
 from scrappers.items import LinkItem, ErrorItem
+from scrappers.utils import connection
 import random
 
 
@@ -18,14 +19,26 @@ class GetLinksSpider(scrapy.Spider):
     }
 
     def start_requests(self):
-        df = pd.read_csv('category_base.csv')
-        for _, row in df.iterrows():
-            category = row['name']
-            url = row['url']
-
-            url = 'https://www.amazon.com/Best-Sellers-Amazon-Devices/zgbs/amazon-devices/2102313011/ref=zg_bs_nav_1_amazon-devices'
-            yield scrapy.Request(url, callback=self.parse, meta={'category': category})
+        conn, curr = connection.connect()
+        curr.execute(
+            """
+                SELECT * FROM categories
+                WHERE status='new'
+            """
+        )
+        result = curr.fetchall()
+        for row in result:
+            print(row)
             break
+
+        # df = pd.read_csv('category_base.csv')
+        # for _, row in df.iterrows():
+        #     category = row['name']
+        #     url = row['url']
+        #
+        #     url = 'https://www.amazon.com/Best-Sellers-Amazon-Devices/zgbs/amazon-devices/2102313011/ref=zg_bs_nav_1_amazon-devices'
+        #     yield scrapy.Request(url, callback=self.parse, meta={'category': category})
+        #     break
 
     def parse(self, response):
         # if error change user agent and retry
@@ -57,6 +70,8 @@ class GetLinksSpider(scrapy.Spider):
                 item['url'] = block.xpath('a[@class="a-link-normal"]/@href').get()
                 yield item
                 break
+            else:
+                print('Done')
 
             # pagination
             next_page = response.css('.a-last a::attr(href)').get()

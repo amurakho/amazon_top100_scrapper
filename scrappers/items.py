@@ -11,6 +11,7 @@ import scrapy
 class CategoryItem(scrapy.Item):
     name = scrapy.Field()
     url = scrapy.Field()
+    status = scrapy.Field()
 
 
 class LinkItem(scrapy.Item):
