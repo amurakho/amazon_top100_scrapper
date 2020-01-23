@@ -28,9 +28,15 @@ class GetLinkPipeline():
 
 class GetCategoryPipeline():
 
+    @staticmethod
+    def _get_depth(path):
+        depth = path.split('/')
+        return len(depth)
+
     def process_item(self, item, spider):
         if item['name'] == 'Any Department':
             return item
         manage = ManageDB()
+        item['depth'] = self._get_depth(item['name'])
         manage.insert_category(item)
         return item

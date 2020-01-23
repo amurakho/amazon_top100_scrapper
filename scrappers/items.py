@@ -12,6 +12,7 @@ class CategoryItem(scrapy.Item):
     name = scrapy.Field()
     url = scrapy.Field()
     status = scrapy.Field()
+    depth = scrapy.Field()
 
 
 class LinkItem(scrapy.Item):

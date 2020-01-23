@@ -30,8 +30,6 @@ class GetLinksSpider(scrapy.Spider):
             category_id = category[0]
             url = category[2]
             self.manage.change_category_status(category_id, 'processed')
-
-            url = 'https://www.amazon.com/Best-Sellers-Amazon-Devices/zgbs/amazon-devices/2102313011/ref=zg_bs_nav_1_amazon-devices'
             yield scrapy.Request(url, callback=self.parse_page, meta={'category_id': category_id})
             break
 
@@ -68,6 +66,7 @@ class GetLinksSpider(scrapy.Spider):
                 for block in blocks:
                     item['url'] = block.xpath('a[@class="a-link-normal"]/@href').get()
                     yield item
+                    break
                 else:
                     self.manage.change_category_status(category_id, status='done')
 
