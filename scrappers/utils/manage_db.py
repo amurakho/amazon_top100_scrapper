@@ -82,28 +82,31 @@ class ManageDB(object):
         self.conn.commit()
 
     def insert_link(self, link):
-        self.curr.execute(
-            """
-            INSERT IGNORE INTO links(url, category, asin)
-            VALUES (%s, %s, %s)
-            """,
-            (
-                link['url'],
-                link['category'],
-                link['asin']
-            ))
+        query = """
+            INSERT IGNORE INTO links(url, asin, category_id)
+            SELECT '{}', '{}', category_id
+                FROM categories
+                WHERE category_id={}
+                LIMIT 1
+        """.format(link['url'], link['asin'], link['category_id'])
+        self.curr.execute(query)
         self.conn.commit()
 
-    def get_n_links(self, n):
-        self.curr.execute(
-            """
+    def get_n_links(self, n, status):
+        query = """
                 SELECT * FROM categories
-                WHERE status='new'
-                LIMIT %s
-            """,
-            (
-                n
-            )
-        )
-        result = self.conn.fetchall()
-        print(result)
+                WHERE status='{}'
+                LIMIT {};
+            """.format(status, 10)
+        self.curr.execute(query)
+        result = self.curr.fetchall()
+        return result
+
+    def change_category_status(self, category_id, status):
+        query = """
+            UPDATE categories
+            SET status='{}'
+            WHERE category_id={};
+        """.format(status, category_id)
+        self.curr.execute(query)
+        self.conn.commit()

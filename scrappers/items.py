@@ -16,7 +16,8 @@ class CategoryItem(scrapy.Item):
 
 class LinkItem(scrapy.Item):
     url = scrapy.Field()
-    category = scrapy.Field()
+    category_id = scrapy.Field()
+    asin = scrapy.Field()
 
 
 class ErrorItem(scrapy.Item):
