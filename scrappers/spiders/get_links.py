@@ -2,7 +2,7 @@
 import scrapy
 import pandas as pd
 from scrappers.items import LinkItem, ErrorItem
-from scrappers.utils import connection
+from scrappers.utils.manage_db import ManageDB
 import random
 
 
@@ -19,17 +19,8 @@ class GetLinksSpider(scrapy.Spider):
     }
 
     def start_requests(self):
-        conn, curr = connection.connect()
-        curr.execute(
-            """
-                SELECT * FROM categories
-                WHERE status='new'
-            """
-        )
-        result = curr.fetchall()
-        for row in result:
-            print(row)
-            break
+        manage = ManageDB()
+        print(manage.get_n_links(10))
 
         # df = pd.read_csv('category_base.csv')
         # for _, row in df.iterrows():
