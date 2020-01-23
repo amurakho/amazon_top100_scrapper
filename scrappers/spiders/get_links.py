@@ -20,8 +20,8 @@ class GetLinksSpider(scrapy.Spider):
     }
 
     def parse(self, response):
-        manage = ManageDB()
-        categories = manage.get_n_links(10, 'new')
+        self.manage = ManageDB()
+        categories = self.manage.get_n_links(10, 'new')
 
         if not categories:
             raise CloseSpider('No more categories')
@@ -29,7 +29,7 @@ class GetLinksSpider(scrapy.Spider):
         for category in categories:
             category_id = category[0]
             url = category[2]
-            manage.change_category_status(category_id, 'processed')
+            self.manage.change_category_status(category_id, 'processed')
 
             url = 'https://www.amazon.com/Best-Sellers-Amazon-Devices/zgbs/amazon-devices/2102313011/ref=zg_bs_nav_1_amazon-devices'
             yield scrapy.Request(url, callback=self.parse_page, meta={'category_id': category_id})
@@ -61,21 +61,21 @@ class GetLinksSpider(scrapy.Spider):
                 item['error_text'] = 'Cannt get products from category'
                 yield item
 
-            item = LinkItem()
-            item['category_id'] = category_id
-
-            for block in blocks:
-                item['url'] = block.xpath('a[@class="a-link-normal"]/@href').get()
-                yield item
-                break
             else:
-                print('Done')
+                item = LinkItem()
+                item['category_id'] = category_id
 
-            # # pagination
-            # next_page = response.css('.a-last a::attr(href)').get()
-            # if next_page:
-            #     yield scrapy.Request(url=next_page, callback=self.parse, meta={
-            #         'category': category,
-            #     })
+                for block in blocks:
+                    item['url'] = block.xpath('a[@class="a-link-normal"]/@href').get()
+                    yield item
+                else:
+                    self.manage.change_category_status(category_id, status='done')
+
+                # # pagination
+                # next_page = response.css('.a-last a::attr(href)').get()
+                # if next_page:
+                #     yield scrapy.Request(url=next_page, callback=self.parse, meta={
+                #         'category_id': category_id,
+                #     })
 
 

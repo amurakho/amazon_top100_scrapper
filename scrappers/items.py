@@ -23,4 +23,4 @@ class LinkItem(scrapy.Item):
 class ErrorItem(scrapy.Item):
     url = scrapy.Field()
     error_text = scrapy.Field()
-    category = scrapy.Field()
+    category_id = scrapy.Field()

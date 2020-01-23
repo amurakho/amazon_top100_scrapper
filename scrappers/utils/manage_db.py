@@ -49,7 +49,8 @@ class ManageDB(object):
                     error_id int unsigned not null auto_increment,
                     text text,
                     url text,
-                    category text,
+                    category_id int unsigned not null,
+                    FOREIGN KEY (category_id) REFERENCES categories(category_id) ON DELETE CASCADE,
                     PRIMARY KEY(error_id)
                     );
             """
@@ -69,16 +70,14 @@ class ManageDB(object):
         self.conn.commit()
 
     def insert_error(self, error):
-        self.curr.execute(
-            """
-            INSERT INTO errors(url, text, category)
-            VALUES (%s, %s, %s)
-            """,
-            (
-                error['url'],
-                error['error_text'],
-                error['category']
-            ))
+        query = """
+             INSERT IGNORE INTO errors(url, text, category_id)
+             SELECT '{}', '{}', category_id
+                 FROM categories
+                 WHERE category_id={}
+                 LIMIT 1
+         """.format(error['url'], error['error_text'], error['category_id'])
+        self.curr.execute(query)
         self.conn.commit()
 
     def insert_link(self, link):
