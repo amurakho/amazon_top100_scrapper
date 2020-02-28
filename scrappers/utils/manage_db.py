@@ -1,5 +1,7 @@
 import mysql.connector
 
+import conf
+
 
 class ManageDB(object):
     def __new__(cls):
@@ -9,10 +11,10 @@ class ManageDB(object):
 
     def __init__(self):
         self.conn = mysql.connector.connect(
-            host='localhost',
-            user='amazon_links',
-            passwd='utor93lol',
-            database='amazon_links'
+            host=conf.HOST,
+            user=conf.USER,
+            passwd=conf.PASSWD,
+            database=conf.DATABASE
         )
         self.curr = self.conn.cursor()
 
@@ -62,6 +64,18 @@ class ManageDB(object):
         )
 
     def insert_category(self, category):
+        query = """
+            SELECT * 
+            FROM categories
+            WHERE url="{}"
+            LIMIT 1
+        """.format(category['url'])
+        self.curr.execute(query)
+        result = self.curr.fetchall()
+
+        if result:
+            return
+
         self.curr.execute(
             """
             INSERT IGNORE INTO categories(url, name, status, depth)
@@ -87,30 +101,37 @@ class ManageDB(object):
         self.conn.commit()
 
     def insert_link(self, link):
+        # query = """
+        #         -- create first variable for old category(depth, id)
+        #         SELECT @old_category_depth:=depth, @old_category_id:=categories.category_id
+        #         FROM links
+        #         JOIN categories ON categories.category_id=links.category_id
+        #         WHERE links.url='{}' LIMIT  1;
+        #         -- create second variable for new category(depth, id)
+        #         SELECT @new_category_depth:=depth, @new_category_id:=categories.category_id
+        #         FROM categories
+        #         WHERE category_id=2 LIMIT  1;
+        #         -- insert new link if it not duplicate
+        #         INSERT INTO links(url, asin, category_id)
+        #             SELECT '{}', '{}', category_id
+        #             FROM categories
+        #             WHERE category_id=2 LIMIT 1
+        #         ON DUPLICATE KEY UPDATE category_id=
+        #         -- if duplicate(you can see what it mean from variables name(i hope me from future didnt killmyself))
+        #             CASE
+        #                 WHEN (SELECT @old_category_depth)>(SELECT @new_category_depth)
+        #                 THEN (SELECT @old_category_id)
+        #                 ELSE (SELECT @new_category_id)
+        #             END;
+        # """.format(link['url'], link['url'], link['asin'], link['category_id'])
         query = """
-                -- create first variable for old category(depth, id)
-                SELECT @old_category_depth:=depth, @old_category_id:=categories.category_id 
-                FROM links 
-                JOIN categories ON categories.category_id=links.category_id 
-                WHERE links.url='{}' LIMIT  1;
-                -- create second variable for new category(depth, id)
-                SELECT @new_category_depth:=depth, @new_category_id:=categories.category_id 
-                FROM categories 
-                WHERE category_id=2 LIMIT  1;
-                -- insert new link if it not duplicate
-                INSERT INTO links(url, asin, category_id)
-                    SELECT '{}', '{}', category_id
-                    FROM categories
-                    WHERE category_id=2 LIMIT 1
-                ON DUPLICATE KEY UPDATE category_id=
-                -- if duplicate(you can see what it mean from variables name(i hope me from future didnt killmyself))
-                    CASE
-                        WHEN (SELECT @old_category_depth)>(SELECT @new_category_depth) 
-                        THEN (SELECT @old_category_id)
-                        ELSE (SELECT @new_category_id)
-                    END;
-        """.format(link['url'], link['url'], link['asin'], link['category_id'])
-
+            INSERT IGNORE INTO links(url, asin, category_id)
+            VALUES  ("{}", "{}", {})
+        """.format(
+                link['url'],
+                link['asin'],
+                link['category_id']
+              )
         self.curr.execute(query)
         self.conn.commit()
 
@@ -123,6 +144,7 @@ class ManageDB(object):
         self.curr.execute(query)
         result = self.curr.fetchall()
         self.curr.nextset()
+        self.conn.commit()
         return result
 
     def change_category_status(self, category_id, status):

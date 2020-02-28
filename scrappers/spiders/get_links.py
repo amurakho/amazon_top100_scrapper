@@ -20,8 +20,9 @@ class GetLinksSpider(scrapy.Spider):
     }
 
     def parse(self, response):
-        self.manage = ManageDB()
-        categories = self.manage.get_n_links(10, 'new')
+        # self.manage = ManageDB()
+        # categories = self.manage.get_n_links(10, 'new')
+        categories = [(12, 'Any Department/Cell Phones & Accessories', 'https://www.amazon.com/Best-Sellers/zgbs/wireless/ref=zg_bs_nav_0/134-5631722-2954113', 'new', 2), (13, 'Any Department/Camera & Photo', 'https://www.amazon.com/best-sellers-camera-photo/zgbs/photo/ref=zg_bs_nav_0/134-5631722-2954113', 'new', 2), (14, 'Any Department/CDs & Vinyl', 'https://www.amazon.com/best-sellers-music-albums/zgbs/music/ref=zg_bs_nav_0/134-5631722-2954113', 'new', 2), (15, 'Any Department/Baby', 'https://www.amazon.com/Best-Sellers-Baby/zgbs/baby-products/ref=zg_bs_nav_0/134-5631722-2954113', 'new', 2), (16, 'Any Department/Books', 'https://www.amazon.com/best-sellers-books-Amazon/zgbs/books/ref=zg_bs_nav_0/134-5631722-2954113', 'new', 2), (17, 'Any Department/Beauty & Personal Care', 'https://www.amazon.com/Best-Sellers-Beauty/zgbs/beauty/ref=zg_bs_nav_0/134-5631722-2954113', 'new', 2), (18, 'Any Department/Automotive', 'https://www.amazon.com/Best-Sellers-Automotive/zgbs/automotive/ref=zg_bs_nav_0/134-5631722-2954113', 'new', 2), (19, 'Any Department/Handmade Products/Health & Personal Care', 'https://www.amazon.com/Best-Sellers-Handmade-Health-Personal-Care-Products/zgbs/handmade/19530416011/ref=zg_bs_nav_hnd_1_hnd', 'new', 3), (20, 'Any Department/Coin Sets', 'https://www.amazon.com/Best-Sellers-Collectible-Coins-Coin-Sets/zgbs/coins/9003136011/ref=zg_bs_nav_coins_col_1_coins_col', 'new', 2), (21, 'Any Department/Handmade Products/Clothing, Shoes & Accessories', 'https://www.amazon.com/Best-Sellers-Handmade-Clothing-Shoes-Accessories/zgbs/handmade/17714704011/ref=zg_bs_nav_hnd_1_hnd', 'new', 3)]
 
         if not categories:
             raise CloseSpider('No more categories')
@@ -29,7 +30,7 @@ class GetLinksSpider(scrapy.Spider):
         for category in categories:
             category_id = category[0]
             url = category[2]
-            self.manage.change_category_status(category_id, 'processed')
+            # self.manage.change_category_status(category_id, 'processed')
             yield scrapy.Request(url, callback=self.parse_page, meta={'category_id': category_id})
             break
 

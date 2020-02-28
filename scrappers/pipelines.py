@@ -9,7 +9,8 @@ import datetime
 from scrappers.items import LinkItem, ErrorItem
 from scrappers.utils.manage_db import ManageDB
 
-class GetLinkPipeline():
+
+class GetLinkPipeline:
 
     @staticmethod
     def _get_asin(url):
@@ -26,7 +27,7 @@ class GetLinkPipeline():
         return item
 
 
-class GetCategoryPipeline():
+class GetCategoryPipeline:
 
     @staticmethod
     def _get_depth(path):
