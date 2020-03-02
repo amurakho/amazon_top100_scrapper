@@ -14,7 +14,7 @@ class GetLinkPipeline:
 
     @staticmethod
     def _get_asin(url):
-        return url[url.find('dp/') + 3:url.find('?')]
+        return url[url.find('dp/') + 3:url.find('/ref')]
 
     def process_item(self, item, spider):
         manage = ManageDB()

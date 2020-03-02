@@ -1,6 +1,6 @@
 import mysql.connector
 
-import conf
+from . import conf
 
 
 class ManageDB(object):

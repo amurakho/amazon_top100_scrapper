@@ -8,4 +8,8 @@ class GetDescrSpider(scrapy.Spider):
     start_urls = ['http://amazon.com/']
 
     def parse(self, response):
-        pass
+        self.manage = ManageDB()
+        categories = self.manage.get_n_links(10, 'new')
+
+        if not categories:
+            raise CloseSpider('No more categories')
