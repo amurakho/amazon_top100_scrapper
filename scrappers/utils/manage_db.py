@@ -1,6 +1,6 @@
 import mysql.connector
 
-from . import conf
+import conf
 
 
 class ManageDB(object):
@@ -43,6 +43,7 @@ class ManageDB(object):
                     category_id int unsigned not null,
                     url VARCHAR(100) UNIQUE,
                     asin VARCHAR(15),
+                    status VARCHAR(5),
                     FOREIGN KEY (category_id) REFERENCES categories(category_id) ON DELETE CASCADE,
                     PRIMARY KEY(link_id)
                     );
@@ -96,6 +97,7 @@ class ManageDB(object):
                  WHERE category_id={}
                  LIMIT 1
          """.format(error['url'], error['error_text'], error['category_id'])
+
         self.curr.execute(query)
         self.conn.commit()
 
@@ -132,27 +134,35 @@ class ManageDB(object):
 
         else:
             query = """
-                INSERT IGNORE INTO links(url, asin, category_id)
-                VALUES  ("{}", "{}", {})
+                INSERT IGNORE INTO links(url, asin, category_id, status)
+                VALUES  ("{}", "{}", {}, "{}")
             """.format(
                     link['url'],
                     link['asin'],
-                    link['category_id']
+                    link['category_id'],
+                    link['status']
                   )
             self.curr.execute(query)
             self.conn.commit()
 
-    def get_n_links(self, n, status):
+    def get_n_categories(self, n, status):
         query = """
                 SELECT * FROM categories
                 WHERE status='{}'
                 LIMIT {};
-            """.format(status, 10)
+            """.format(status, n)
         self.curr.execute(query)
         result = self.curr.fetchall()
         self.curr.nextset()
         self.conn.commit()
         return result
+
+    def get_n_links(self, n):
+        query = """
+                SELECT * FROM categories
+                WHERE status='{}'
+                LIMIT {};
+            """.format('new', n)
 
     def change_category_status(self, category_id, status):
         query = """

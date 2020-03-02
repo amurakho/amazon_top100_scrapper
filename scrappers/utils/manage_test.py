@@ -89,11 +89,12 @@ class InsertErrorTest(unittest.TestCase):
         self.table_name = 'errors'
         self.field_name = 'url'
         self.field_value = 'http://test_case.com'
+        self.category_id = create_test_category(10)
 
         self.d = {
                 self.field_name: self.field_value,
                 'error_text': 'Test case',
-                'category_id': 1,
+                'category_id': self.category_id,
         }
 
     @insert_test_decorator
@@ -102,6 +103,7 @@ class InsertErrorTest(unittest.TestCase):
 
     def tearDown(self) -> None:
         delete_from_table(self.table_name, self.field_name, self.field_value)
+        delete_from_table('categories', 'category_id', self.category_id)
 
 
 class InsertLinkTest(unittest.TestCase):
@@ -115,7 +117,8 @@ class InsertLinkTest(unittest.TestCase):
         self.d = {
             self.field_name: self.field_value,
             'asin': 'test_asin',
-            'category_id': self.category_id
+            'category_id': self.category_id,
+            'status': 'new'
         }
 
     @insert_test_decorator
@@ -142,7 +145,8 @@ class InsertLinkTest(unittest.TestCase):
         new_d = {
             self.field_name: self.field_value,
             'asin': 'test_asin',
-            'category_id': new_category_id
+            'category_id': new_category_id,
+            'status': 'new'
         }
         MANAGE.insert_link(new_d)
 

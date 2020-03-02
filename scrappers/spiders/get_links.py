@@ -22,7 +22,7 @@ class GetLinksSpider(scrapy.Spider):
 
     def parse(self, response):
         self.manage = ManageDB()
-        categories = self.manage.get_n_links(10, 'new')
+        categories = self.manage.get_n_categories(10, 'new')
 
         if not categories:
             raise CloseSpider('No more categories')
