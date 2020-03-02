@@ -16,7 +16,7 @@ class ManageDB(object):
             passwd=conf.PASSWD,
             database=conf.DATABASE
         )
-        self.curr = self.conn.cursor()
+        self.curr = self.conn.cursor(dictionary=True)
 
         self._create_dbs()
 
@@ -101,39 +101,107 @@ class ManageDB(object):
         self.conn.commit()
 
     def insert_link(self, link):
+        # try to get info about already saved link
+        query = """
+                SELECT categories.depth, categories.category_id, links.link_id
+                FROM links
+                JOIN categories ON categories.category_id=links.category_id
+                WHERE links.url="{}" LIMIT  1;
+        """.format(link['url'])
+        self.curr.execute(query)
+        old_category = self.curr.fetchall()
+
+        if old_category:
+            # get depth of new category
+            query = """
+                    SELECT depth, categories.category_id
+                    FROM categories
+                    WHERE category_id={} LIMIT  1;
+            """.format(link['category_id'])
+            self.curr.execute(query)
+            new_category = self.curr.fetchall()
+
+            if new_category[0]['depth'] > old_category[0]['depth']:
+                query = """
+                    UPDATE links
+                    SET 
+                        category_id={}
+                    WHERE
+                        link_id={}
+                """.format(new_category[0]['category_id'], old_category[0]['link_id'])
+                self.curr.execute(query)
+                self.conn.commit()
+        # # get depth of category for link which already exist
         # query = """
-        #         -- create first variable for old category(depth, id)
+        #         SELECT depth, categories.category_id
+        #         FROM links
+        #         JOIN categories ON categories.category_id=links.category_id
+        #         WHERE links.url="{}" LIMIT  1;
+        # """.format(link['url'])
+        # self.curr.execute(query)
+        # old_category = self.curr.fetchall()
+        #
+        # # get depth of new category
+        # query = """
+        #         SELECT depth, categories.category_id
+        #         FROM categories
+        #         WHERE category_id={} LIMIT  1;
+        # """.format(link['category_id'])
+        # self.curr.execute(query)
+        # new_category = self.curr.fetchall()
+        #
+        # query = """
+        #         INSERT INTO links(url, asin, category_id)
+        #             SELECT "{url}", "{asin}", {category_id}
+        #             FROM categories
+        #             WHERE category_id={category_id} LIMIT 1
+        #         ON DUPLICATE KEY UPDATE category_id=
+        #         -- if duplicate(you can see what it mean from variables name(i hope me from future didnt kill myself))
+        #             CASE
+        #                 WHEN (SELECT {old_cat_depth})>(SELECT {new_cat_depth})
+        #                 THEN (SELECT {old_cat_id})
+        #                 ELSE (SELECT {new_cat_id})
+        #             END;
+        # """.format(url=link['url'], asin=link['asin'], category_id=link['category_id'],
+        #            old_cat_depth=old_category[0], new_cat_depth=new_category[0],
+        #            old_cat_id=old_category[1], new_cat_id=new_category[1])
+
+
+        # query = """
+        #         -- get depth of category for link which already exist
         #         SELECT @old_category_depth:=depth, @old_category_id:=categories.category_id
         #         FROM links
         #         JOIN categories ON categories.category_id=links.category_id
-        #         WHERE links.url='{}' LIMIT  1;
-        #         -- create second variable for new category(depth, id)
+        #         WHERE links.url="{url}" LIMIT  1;
+        #         -- get depth of new category
         #         SELECT @new_category_depth:=depth, @new_category_id:=categories.category_id
         #         FROM categories
-        #         WHERE category_id=2 LIMIT  1;
+        #         WHERE category_id={category_id} LIMIT  1;
         #         -- insert new link if it not duplicate
         #         INSERT INTO links(url, asin, category_id)
-        #             SELECT '{}', '{}', category_id
+        #             SELECT "{url}", "{asin}", {category_id}
         #             FROM categories
-        #             WHERE category_id=2 LIMIT 1
+        #             WHERE category_id={category_id} LIMIT 1
         #         ON DUPLICATE KEY UPDATE category_id=
-        #         -- if duplicate(you can see what it mean from variables name(i hope me from future didnt killmyself))
+        #         -- if duplicate(you can see what it mean from variables name(i hope me from future didnt kill myself))
         #             CASE
         #                 WHEN (SELECT @old_category_depth)>(SELECT @new_category_depth)
         #                 THEN (SELECT @old_category_id)
         #                 ELSE (SELECT @new_category_id)
         #             END;
-        # """.format(link['url'], link['url'], link['asin'], link['category_id'])
-        query = """
-            INSERT IGNORE INTO links(url, asin, category_id)
-            VALUES  ("{}", "{}", {})
-        """.format(
-                link['url'],
-                link['asin'],
-                link['category_id']
-              )
-        self.curr.execute(query)
-        self.conn.commit()
+        # """.format(url=link['url'], category_id=link['category_id'], asin=link['asin'])
+
+        # query = """
+        #     INSERT IGNORE INTO links(url, asin, category_id)
+        #     VALUES  ("{}", "{}", {})
+        # """.format(
+        #         link['url'],
+        #         link['asin'],
+        #         link['category_id']
+        #       )
+
+        # self.curr.execute(query)
+        # self.conn.commit()
 
     def get_n_links(self, n, status):
         query = """
