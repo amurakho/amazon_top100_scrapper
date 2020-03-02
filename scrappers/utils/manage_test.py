@@ -27,6 +27,25 @@ def delete_from_table(table_name, field_name, field_val):
     MANAGE.conn.commit()
 
 
+def create_test_category(depth):
+    url = 'http://test_cat.com' + str(depth)
+    query = """
+        INSERT IGNORE INTO categories(url, name, status, depth)
+        VALUES ("{}", "{}", "{}", {})
+    """.format(url, 'test_cat_' + str(depth), 'new', depth)
+    MANAGE.curr.execute(query)
+    MANAGE.conn.commit()
+
+    query = """
+        SELECT category_id
+        FROM categories
+        WHERE url="{}"
+    """.format(url)
+    MANAGE.curr.execute(query)
+    res = MANAGE.curr.fetchall()
+    return res[0]['category_id']
+
+
 def insert_test_decorator(func):
     def wrapper(self):
         func(self)
@@ -92,23 +111,51 @@ class InsertLinkTest(unittest.TestCase):
         self.field_name = 'url'
         self.field_value = 'http://test_case.com'
 
+        self.category_id = create_test_category(10)
         self.d = {
             self.field_name: self.field_value,
             'asin': 'test_asin',
-            'category_id': 1
+            'category_id': self.category_id
         }
 
     @insert_test_decorator
     def test_good(self):
         MANAGE.insert_link(self.d)
 
-    # @insert_test_decorator
-    # def test_duplicate(self):
-    #     MANAGE.insert_link(self.d)
-    #     MANAGE.insert_link(self.d)
+    @insert_test_decorator
+    def test_duplicate(self):
+        MANAGE.insert_link(self.d)
+        MANAGE.insert_link(self.d)
 
-    # def tearDown(self) -> None:
-    #     delete_from_table(self.table_name, self.field_name, self.field_value)
+    def test_bigger_depth(self):
+        """
+        Create link
+        Create new category with bigger depth
+        Create new link with new category
+        Get created link from table
+        Get category which relation with taken link
+        Test
+        """
+        MANAGE.insert_link(self.d)
+
+        new_category_id = create_test_category(11)
+        new_d = {
+            self.field_name: self.field_value,
+            'asin': 'test_asin',
+            'category_id': new_category_id
+        }
+        MANAGE.insert_link(new_d)
+
+        res = get_from_table(self.table_name, self.field_name, self.field_value)
+        category_id = res[0]['category_id']
+
+        res = get_from_table('categories', 'category_id', category_id)
+        self.assertEqual(res[0]['depth'], 11)
+        delete_from_table('categories', 'category_id', category_id)
+
+    def tearDown(self) -> None:
+        delete_from_table(self.table_name, self.field_name, self.field_value)
+        delete_from_table('categories', 'category_id', self.category_id)
 
 
 if __name__ == '__main__':
